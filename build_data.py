@@ -19,19 +19,23 @@ from collections import Counter
 import openpyxl
 
 # ── Configure the current output file for each category here ──────────────
+# All three read from one shared folder — drop/overwrite the matching
+# filename there after a run and re-run this script. Nothing else to edit.
+OUTPUT_DIR = r"C:\Users\Swati Shukla\Downloads\Corporate_CSR_Monitor\outputs"
+
 SOURCES = {
     "companies": {
-        "path": r"C:\Users\Swati Shukla\Downloads\Companies_output.xlsx",
+        "path": os.path.join(OUTPUT_DIR, "Companies_output.xlsx"),
         "sourceList": "CSR_Companies_2024-25.csv",
         "label": "CSR Companies",
     },
     "rnd": {
-        "path": r"C:\Users\Swati Shukla\Downloads\Corporate_CSR_Monitor\dist\RnD_Companies_output.xlsx",
+        "path": os.path.join(OUTPUT_DIR, "RnD_Companies_output.xlsx"),
         "sourceList": "RnD_Companies_2022-23.csv",
         "label": "R&D Companies",
     },
     "institutes": {
-        "path": r"C:\Users\Swati Shukla\Downloads\Corporate_CSR_Monitor\Institute_CSR_Donations.xlsx",
+        "path": os.path.join(OUTPUT_DIR, "Institute_CSR_Donations.xlsx"),
         "sourceList": "Institutes (IIT / IISc / IISER)",
         "label": "Institutes",
     },
