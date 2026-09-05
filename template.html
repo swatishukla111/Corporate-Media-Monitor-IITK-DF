@@ -270,6 +270,12 @@
   .search-box input {
     border: none; background: none; outline: none; color: var(--ink); font-size: 13.5px; width: 100%; font-family: var(--body);
   }
+  .search-btn {
+    flex-shrink: 0; border: none; border-left: 1px solid var(--line); background: none; cursor: pointer;
+    color: var(--ink-dim); font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+    padding: 4px 0 4px 11px; margin-left: 2px;
+  }
+  .search-btn:hover { color: var(--accent); }
   .chip-row { display: flex; gap: 7px; flex-wrap: wrap; }
   .chip {
     font-family: var(--mono); font-size: 11px; padding: 6px 11px; border-radius: 0; border: 1px solid var(--line);
@@ -582,6 +588,7 @@ function renderDashboard() {
         <div class="search-box" style="padding:6px 10px;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
           <input type="text" id="searchInput" placeholder="Headline, partner…" value="${state.search}">
+          <button type="button" class="search-btn" id="searchBtn">Search</button>
         </div>
       </div>
       <div class="filter-clear"><button id="clearFilters">Clear all filters</button></div>
@@ -624,6 +631,10 @@ function renderDashboard() {
   document.getElementById("dateToInput").addEventListener("change", e => { state.dateTo = e.target.value; state.page = 1; renderRows(); });
 
   document.getElementById("searchInput").addEventListener("input", e => { state.search = e.target.value; state.page = 1; renderRows(); });
+  document.getElementById("searchInput").addEventListener("keydown", e => { if (e.key === "Enter") { state.page = 1; renderRows(); } });
+  document.getElementById("searchBtn").addEventListener("click", () => {
+    state.search = document.getElementById("searchInput").value; state.page = 1; renderRows();
+  });
   document.getElementById("sortSelect").value = state.sort;
   document.getElementById("sortSelect").addEventListener("change", e => { state.sort = e.target.value; renderRows(); });
   document.getElementById("catChips").querySelectorAll(".chip").forEach(chip => {
