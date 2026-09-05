@@ -172,6 +172,30 @@ def _is_institute_mode(headers):
     return "Institute Name" in headers and "Donor Company" in headers
 
 
+def _dedupe_rows(rows):
+    """Defensive de-dup for data scraped before the engine's own dedup key
+    stopped including category — the same real story used to get written
+    twice when two different category searches both found it (e.g. once
+    as "New Initiative", once as "CSR Spend"). Same fingerprint shape as
+    the engine's current _dedup_key/_institute_dedup_key: company +
+    headline text, or a shared source URL, regardless of category. Keeps
+    the first occurrence of each fingerprint."""
+    seen = set()
+    out = []
+    for r in rows:
+        text = r["initiative"] or r["headline"] or r["update"]
+        hl = _norm(text)[:40]
+        keys = {f"{r['companyGroup']}|{hl}"}
+        url = re.sub(r'^https?://', '', re.sub(r'^www\.', '', (r["source"] or "").strip().lower())).rstrip('/')
+        if url and "/" in url:
+            keys.add(f"url|{url}")
+        if keys & seen:
+            continue
+        seen.update(keys)
+        out.append(r)
+    return out
+
+
 def load_category(key, cfg):
     path = cfg["path"]
     if not path or not os.path.exists(path):
@@ -235,6 +259,11 @@ def load_category(key, cfg):
 
     if not out_rows:
         return empty_result(cfg, status="pending")
+
+    before = len(out_rows)
+    out_rows = _dedupe_rows(out_rows)
+    if len(out_rows) < before:
+        print(f"  {key}: dropped {before - len(out_rows)} duplicate row(s) (same story, different category label)")
 
     cat_counts = Counter(r["category"] for r in out_rows if r["category"])
     groups = {}
