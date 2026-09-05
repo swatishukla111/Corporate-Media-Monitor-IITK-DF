@@ -46,6 +46,9 @@ OUT_PATH = os.path.join(os.path.dirname(__file__), "dashboard_data.json")
 _LEGAL_SUFFIX_RE = re.compile(
     r'\b(ltd\.?|limited|pvt\.?|private|inc\.?|incorporated|corp\.?|corporation|'
     r'plc|llp|group|industries|holdings|company|co\.?)\b', re.IGNORECASE)
+_PAREN_RE = re.compile(r'\([^)]*\)')
+_AND_WORD_RE = re.compile(r'\band\b', re.IGNORECASE)
+_FOUNDATION_RE = re.compile(r'\bfoundation\b', re.IGNORECASE)
 
 _MONTHS = {m.lower(): i + 1 for i, m in enumerate(
     ["January", "February", "March", "April", "May", "June", "July", "August",
@@ -57,7 +60,17 @@ def _norm(s):
 
 
 def _company_root(company):
-    s = _LEGAL_SUFFIX_RE.sub('', company or '')
+    """Collapse name variants that are the same real company — legal
+    suffixes (Ltd/Limited/Corporation/...), a parenthetical aside or
+    abbreviation ("(IOCL)", "(Reliance Foundation)"), the word "foundation"
+    on its own, and "and" vs "&" — down to one grouping key. Deliberately
+    aggressive: this is for UI grouping/filter-dropdown dedup, not for
+    "is this company mentioned in this article" matching, where merging
+    too much would cause false positives."""
+    s = _PAREN_RE.sub(' ', company or '')
+    s = _LEGAL_SUFFIX_RE.sub(' ', s)
+    s = _FOUNDATION_RE.sub(' ', s)
+    s = _AND_WORD_RE.sub(' ', s)
     return _norm(s) or _norm(company)
 
 

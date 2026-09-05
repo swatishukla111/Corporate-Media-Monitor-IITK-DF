@@ -555,10 +555,20 @@ function renderDashboard() {
   `;
 
   const companySelect = document.getElementById("companySelect");
-  const companyNames = Array.from(new Set(d.rows.map(r => r.company))).sort((a,b) => a.localeCompare(b));
-  companyNames.forEach(name => {
+  // Group by the normalized companyGroup (strips Ltd/Limited/Pvt/&Power/etc.
+  // variants that otherwise show up as separate-looking dropdown entries for
+  // the same real company) and pick the shortest raw name seen for each
+  // group as its display label — usually the cleanest, most-recognizable form.
+  const groupLabels = new Map();
+  d.rows.forEach(r => {
+    if (!r.companyGroup) return;
+    const current = groupLabels.get(r.companyGroup);
+    if (!current || r.company.length < current.length) groupLabels.set(r.companyGroup, r.company);
+  });
+  const groupedCompanies = Array.from(groupLabels.entries()).sort((a,b) => a[1].localeCompare(b[1]));
+  groupedCompanies.forEach(([group, label]) => {
     const opt = document.createElement("option");
-    opt.value = name; opt.textContent = name;
+    opt.value = group; opt.textContent = label;
     companySelect.appendChild(opt);
   });
   companySelect.value = state.company;
@@ -595,7 +605,7 @@ function renderRows() {
 
   let rows = d.rows.filter(r => {
     if (state.cats.size && !state.cats.has(r.category)) return false;
-    if (state.company && r.company !== state.company) return false;
+    if (state.company && r.companyGroup !== state.company) return false;
     if (state.dateFrom && (!r.dateSort || r.dateSort < state.dateFrom)) return false;
     if (state.dateTo && (!r.dateSort || r.dateSort > state.dateTo)) return false;
     if (state.search) {
