@@ -1,27 +1,27 @@
 <title>Corporate Media Monitor</title>
 <meta name="description" content="Update monitor tracking corporate CSR activity across three channels: CSR companies, R&D companies, and academic institutes.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' fill='%2314170F'/%3E%3Crect x='3' y='13' width='3' height='8' fill='%23D9A536'/%3E%3Crect x='8' y='6' width='3' height='15' fill='%23D9A536'/%3E%3Crect x='13' y='10' width='3' height='11' fill='%23D9A536'/%3E%3Crect x='18' y='3' width='3' height='18' fill='%23D9A536'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' fill='%23101826'/%3E%3Crect x='3' y='13' width='3' height='8' fill='%236E93F0'/%3E%3Crect x='8' y='6' width='3' height='15' fill='%236E93F0'/%3E%3Crect x='13' y='10' width='3' height='11' fill='%236E93F0'/%3E%3Crect x='18' y='3' width='3' height='18' fill='%236E93F0'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
   :root {
-    /* ── Light (default) — "ledger desk" ───────────────────────────── */
-    --bg:        #E2E4DC;
-    --panel:     #F3F4EF;
-    --panel-2:   #D7DACF;
-    --ink:       #14170F;
-    --ink-dim:   #5B6455;
-    --line:      #C6CBBC;
-    --line-soft: #D9DCCF;
-    --accent:      #8A5A12;
-    --accent-ink:  #FBF3E4;
-    --accent-soft: #EBDDBB;
-    --ok:          #2F6B4F;
-    --ok-soft:     #D9E7DC;
-    --danger:      #8E2E22;
-    --danger-soft: #EAD9D2;
+    /* ── Light (default) — "press desk" ────────────────────────────── */
+    --bg:        #FFFFFF;
+    --panel:     #F5F7FA;
+    --panel-2:   #E9EDF3;
+    --ink:       #101826;
+    --ink-dim:   #5A6478;
+    --line:      #D9DEE6;
+    --line-soft: #E9ECF1;
+    --accent:      #1E3A73;
+    --accent-ink:  #FFFFFF;
+    --accent-soft: #D6E0F2;
+    --ok:          #1F7A5C;
+    --ok-soft:     #DCEFE6;
+    --danger:      #B23A3A;
+    --danger-soft: #F3DEDE;
     --shadow: 4px 4px 0 0 var(--accent);
 
     --cat-new:        #3D6B3F;  --cat-new-soft:   #DCE7DA;
@@ -40,20 +40,20 @@
 
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg:        #14120B;
-      --panel:     #1E1B12;
-      --panel-2:   #26221A;
-      --ink:       #EDE7D6;
-      --ink-dim:   #9C9480;
-      --line:      #33301F;
-      --line-soft: #262316;
-      --accent:      #D9A536;
-      --accent-ink:  #1C1204;
-      --accent-soft: #3D2D0E;
-      --ok:          #5FAE86;
-      --ok-soft:     #1C3226;
-      --danger:      #D97B63;
-      --danger-soft: #3A2016;
+      --bg:        #0A101C;
+      --panel:     #111827;
+      --panel-2:   #1B2436;
+      --ink:       #E7ECF5;
+      --ink-dim:   #93A0B8;
+      --line:      #263349;
+      --line-soft: #1B2436;
+      --accent:      #6E93F0;
+      --accent-ink:  #0A101C;
+      --accent-soft: #1D2C4D;
+      --ok:          #4FBF95;
+      --ok-soft:     #163229;
+      --danger:      #E27272;
+      --danger-soft: #3A1C1C;
 
       --cat-new:        #7FBF82; --cat-new-soft:   #1C2E1E;
       --cat-ngo:        #52C7B4; --cat-ngo-soft:   #143430;
@@ -66,20 +66,20 @@
     }
   }
   :root[data-theme="dark"] {
-    --bg:        #14120B;
-    --panel:     #1E1B12;
-    --panel-2:   #26221A;
-    --ink:       #EDE7D6;
-    --ink-dim:   #9C9480;
-    --line:      #33301F;
-    --line-soft: #262316;
-    --accent:      #D9A536;
-    --accent-ink:  #1C1204;
-    --accent-soft: #3D2D0E;
-    --ok:          #5FAE86;
-    --ok-soft:     #1C3226;
-    --danger:      #D97B63;
-    --danger-soft: #3A2016;
+    --bg:        #0A101C;
+    --panel:     #111827;
+    --panel-2:   #1B2436;
+    --ink:       #E7ECF5;
+    --ink-dim:   #93A0B8;
+    --line:      #263349;
+    --line-soft: #1B2436;
+    --accent:      #6E93F0;
+    --accent-ink:  #0A101C;
+    --accent-soft: #1D2C4D;
+    --ok:          #4FBF95;
+    --ok-soft:     #163229;
+    --danger:      #E27272;
+    --danger-soft: #3A1C1C;
 
     --cat-new:        #7FBF82; --cat-new-soft:   #1C2E1E;
     --cat-ngo:        #52C7B4; --cat-ngo-soft:   #143430;
