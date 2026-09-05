@@ -1,6 +1,7 @@
 """
 build_html.py — Injects dashboard_data.json into template.html to produce
-dashboard.html, the file to publish (or republish) as the Artifact.
+index.html, the file GitHub Pages serves. Commit and push index.html (and
+dashboard_data.json) after running this to publish the refresh.
 
 Usage:  python build_data.py && python build_html.py
 """

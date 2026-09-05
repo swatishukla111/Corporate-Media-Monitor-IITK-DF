@@ -11,6 +11,7 @@ land — a category with no file yet, or a header-only file, renders as a
 "no runs completed yet" empty state rather than being skipped):
 """
 
+import csv
 import json
 import os
 import re
@@ -28,16 +29,22 @@ SOURCES = {
         "path": os.path.join(OUTPUT_DIR, "Companies_output.xlsx"),
         "sourceList": "CSR_Companies_2024-25.csv",
         "label": "CSR Companies",
+        "canonicalList": r"C:\Users\Swati Shukla\Downloads\Corporate_CSR_Monitor\dist\CSR_Companies_2024-25.csv",
     },
     "rnd": {
         "path": os.path.join(OUTPUT_DIR, "RnD_Companies_output.xlsx"),
         "sourceList": "RnD_Companies_2022-23.csv",
         "label": "R&D Companies",
+        "canonicalList": r"C:\Users\Swati Shukla\Downloads\Corporate_CSR_Monitor\dist\RnD_Companies_2022-23.csv",
     },
     "institutes": {
         "path": os.path.join(OUTPUT_DIR, "Institute_CSR_Donations.xlsx"),
         "sourceList": "Institutes (IIT / IISc / IISER)",
         "label": "Institutes",
+        # No fixed list here — institute mode discovers whichever donor
+        # company is named, so there's no authoritative name to snap to.
+        "canonicalList": None,
+        "instituteMode": True,
     },
 }
 
@@ -72,6 +79,69 @@ def _company_root(company):
     s = _FOUNDATION_RE.sub(' ', s)
     s = _AND_WORD_RE.sub(' ', s)
     return _norm(s) or _norm(company)
+
+
+_STOPWORDS = {"and", "of", "the", "for", "&"}
+
+
+def _acronym_candidates(name):
+    """Generate plausible acronyms for a canonical company name, e.g.
+    "Indian Oil Corporation" -> {"IOC", "IOCL"} — the bare initials, and
+    the same with a trailing L, since Indian PSUs are almost always
+    informally abbreviated as if "Limited" were part of the acronym
+    (IOCL, NHPC, ONGC-style names already end up covered by the bare
+    form). Only built from words that survive stripping legal suffixes,
+    so "Limited"/"Corporation" itself never becomes part of the initials."""
+    words = re.findall(r"[A-Za-z']+", _LEGAL_SUFFIX_RE.sub(' ', name))
+    letters = "".join(w[0] for w in words if w.lower() not in _STOPWORDS and w)
+    letters = letters.upper()
+    if len(letters) < 2:
+        return set()
+    return {letters, letters + "L"}
+
+
+def load_canonical_list(path):
+    """Load a company-list CSV (one name per row, optional header) and
+    build a matcher back to it: `resolve(scraped_name)` returns the
+    canonical name from the list if it can confidently identify one, else
+    None. Two strategies, in order: (1) normalized-root match — handles
+    almost every Ltd/Limited/Pvt/Corporation/"and vs &" spelling
+    difference; (2) acronym match — handles the AI response naming a
+    company by its abbreviation alone (bare "IOCL", or "(IOCL)" tacked on
+    as a parenthetical) with no full form for the root match to catch."""
+    if not path or not os.path.exists(path):
+        return None
+    names = []
+    with open(path, newline="", encoding="utf-8-sig") as f:
+        for row in csv.reader(f):
+            if row and row[0].strip():
+                names.append(row[0].strip())
+    header_words = {"company", "companies", "name"}
+    names = [n for n in names if n.lower() not in header_words]
+
+    root_to_name = {}
+    acronym_to_name = {}
+    for name in names:
+        root_to_name[_company_root(name)] = name
+        for ac in _acronym_candidates(name):
+            acronym_to_name.setdefault(ac, name)
+
+    def resolve(scraped_name):
+        root = _company_root(scraped_name)
+        if root in root_to_name:
+            return root_to_name[root]
+        # Try any parenthetical aside in the scraped text ("... (IOCL)"),
+        # and the bare scraped name itself if it's short enough to plausibly
+        # be an all-caps acronym on its own.
+        candidates = re.findall(r'\(([^)]*)\)', scraped_name or '')
+        candidates.append(scraped_name or '')
+        for cand in candidates:
+            key = re.sub(r'[^A-Za-z]', '', cand).upper()
+            if key and key in acronym_to_name:
+                return acronym_to_name[key]
+        return None
+
+    return resolve
 
 
 def _parse_date(s):
@@ -117,6 +187,7 @@ def load_category(key, cfg):
 
     institute_mode = _is_institute_mode(headers)
     idx = {h: i for i, h in enumerate(headers)}
+    resolve_canonical = load_canonical_list(cfg.get("canonicalList"))
 
     def cell(row, name, default=""):
         i = idx.get(name)
@@ -138,10 +209,13 @@ def load_category(key, cfg):
             subject = cell(row, "Company Name")
             secondary = ""
         date_raw = cell(row, "Date")
+        canonical = resolve_canonical(subject) if resolve_canonical and not institute_mode else None
+        display_company = canonical or subject
         out_rows.append({
             "id": f"r{n:04d}",
-            "company": subject,
-            "companyGroup": _company_root(subject),
+            "company": display_company,
+            "scrapedAs": subject if canonical and canonical != subject else "",
+            "companyGroup": _company_root(display_company),
             "secondary": secondary,
             "category": cell(row, "CSR Category"),
             "theme": cell(row, "Theme"),
