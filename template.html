@@ -200,12 +200,48 @@
   }
   .panel h3 { font-size: 14px; text-transform: uppercase; letter-spacing: .05em; margin: 0 0 16px; color: var(--ink-dim); font-family: var(--body); font-weight: 600; }
 
+  .cat-panel-grid { display: grid; grid-template-columns: 200px 1fr; gap: 28px; align-items: center; }
+  @media (max-width: 720px) { .cat-panel-grid { grid-template-columns: 1fr; } }
+  .donut-wrap { display: flex; justify-content: center; }
+  .donut-wrap svg { max-width: 100%; height: auto; }
+  .donut-center-label { font-family: var(--display); font-weight: 600; }
+
   .bars { display: flex; flex-direction: column; gap: 10px; }
   .bar-row { display: grid; grid-template-columns: 168px 1fr 44px; align-items: center; gap: 12px; }
   .bar-row .name { font-size: 13px; }
   .bar-track { position: relative; height: 10px; background: var(--line-soft); border-radius: 5px; overflow: hidden; }
   .bar-fill { position: absolute; inset: 0 auto 0 0; border-radius: 5px; }
   .bar-row .count { font-family: var(--mono); font-size: 12.5px; text-align: right; color: var(--ink-dim); }
+
+  .filter-bar {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+    background: var(--paper-2); border: 1px solid var(--line); border-radius: 12px;
+    padding: 16px 18px; margin-bottom: 18px;
+  }
+  @media (max-width: 860px) { .filter-bar { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 520px) { .filter-bar { grid-template-columns: 1fr; } }
+  .filter-field label {
+    display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--ink-dim); margin-bottom: 6px;
+  }
+  .filter-field select, .filter-field .date-pair { width: 100%; }
+  .filter-field select {
+    border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+    border-radius: 8px; padding: 8px 10px; font-size: 13px; font-family: var(--body); cursor: pointer;
+  }
+  .date-pair { display: flex; align-items: center; gap: 6px; }
+  .date-pair input[type="date"] {
+    flex: 1 1 0; min-width: 0; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+    border-radius: 8px; padding: 7px 8px; font-size: 12.5px; font-family: var(--mono); color-scheme: light dark;
+  }
+  .date-pair .to { color: var(--ink-dim); font-size: 11px; }
+  .filter-clear {
+    grid-column: 1 / -1; text-align: right; margin-top: -2px;
+  }
+  .filter-clear button {
+    border: none; background: none; color: var(--brand); font-size: 12.5px; cursor: pointer; padding: 2px 0;
+    text-decoration: underline; text-underline-offset: 2px;
+  }
 
   .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
   .search-box {
@@ -350,7 +386,31 @@ const TILE_META = {
   institutes: { tag: "Register 03", title: "Institutes" },
 };
 
-const state = { category: null, search: "", cats: new Set(), sort: "date-desc", page: 1, perPage: 12, openCard: null };
+const state = { category: null, search: "", cats: new Set(), company: "", dateFrom: "", dateTo: "", sort: "date-desc", page: 1, perPage: 12, openCard: null };
+
+function buildDonut(cats, total) {
+  const r = 46, cx = 60, cy = 60, sw = 17;
+  const circumference = 2 * Math.PI * r;
+  let offset = 0;
+  const segs = cats.map(([name, count]) => {
+    const k = catKey(name);
+    const len = (count / total) * circumference;
+    const seg = { k, len, offset };
+    offset += len;
+    return seg;
+  });
+  const rings = segs.map(s => `
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--cat-${s.k})" stroke-width="${sw}"
+      stroke-dasharray="${s.len.toFixed(2)} ${circumference.toFixed(2)}"
+      stroke-dashoffset="${(-s.offset).toFixed(2)}" stroke-linecap="butt"></circle>`).join("");
+  return `
+  <svg viewBox="0 0 120 120" width="200" height="200" role="img" aria-label="Category breakdown donut chart">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--line-soft)" stroke-width="${sw}"></circle>
+    <g transform="rotate(-90 ${cx} ${cy})">${rings}</g>
+    <text x="${cx}" y="${cy-4}" text-anchor="middle" class="donut-center-label" fill="var(--ink)" font-size="22">${total}</text>
+    <text x="${cx}" y="${cy+14}" text-anchor="middle" fill="var(--ink-dim)" font-size="9" letter-spacing="0.5">UPDATES</text>
+  </svg>`;
+}
 
 function fmtDate(iso) {
   if (!iso) return "—";
@@ -393,7 +453,8 @@ function renderTiles() {
 }
 
 function openCategory(key) {
-  state.category = key; state.search = ""; state.cats = new Set(); state.sort = "date-desc"; state.page = 1; state.openCard = null;
+  state.category = key; state.search = ""; state.cats = new Set(); state.company = ""; state.dateFrom = ""; state.dateTo = "";
+  state.sort = "date-desc"; state.page = 1; state.openCard = null;
   document.getElementById("landing").classList.remove("active");
   document.getElementById("dashboard").classList.add("active");
   document.getElementById("dashTitle").textContent = TILE_META[key].title;
@@ -436,28 +497,54 @@ function renderDashboard() {
 
     <div class="panel">
       <h3>By category</h3>
-      <div class="bars">
-        ${cats.map(([name, count]) => {
-          const k = catKey(name);
-          return `<div class="bar-row">
-            <div class="name">${name}</div>
-            <div class="bar-track"><div class="bar-fill" style="width:${(count/maxCat*100).toFixed(1)}%; background:var(--cat-${k})"></div></div>
-            <div class="count">${count}</div>
-          </div>`;
-        }).join("")}
+      <div class="cat-panel-grid">
+        <div class="donut-wrap">${buildDonut(cats, s.totalUpdates)}</div>
+        <div class="bars">
+          ${cats.map(([name, count]) => {
+            const k = catKey(name);
+            return `<div class="bar-row">
+              <div class="name">${name}</div>
+              <div class="bar-track"><div class="bar-fill" style="width:${(count/maxCat*100).toFixed(1)}%; background:var(--cat-${k})"></div></div>
+              <div class="count">${count}</div>
+            </div>`;
+          }).join("")}
+        </div>
       </div>
     </div>
 
-    <div class="controls">
-      <div class="search-box">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-        <input type="text" id="searchInput" placeholder="Search company, headline, partner…" value="${state.search}">
+    <div class="filter-bar">
+      <div class="filter-field">
+        <label for="companySelect">${s.instituteMode ? "Donor company" : "Company"}</label>
+        <select id="companySelect"><option value="">All ${s.instituteMode ? "donors" : "companies"}</option></select>
       </div>
-      <select class="sort-select" id="sortSelect">
-        <option value="date-desc">Newest first</option>
-        <option value="date-asc">Oldest first</option>
-        <option value="company-asc">Company A–Z</option>
-      </select>
+      <div class="filter-field">
+        <label for="dateFromInput">Date range</label>
+        <div class="date-pair">
+          <input type="date" id="dateFromInput" min="${s.earliestDate||""}" max="${s.latestDate||""}">
+          <span class="to">to</span>
+          <input type="date" id="dateToInput" min="${s.earliestDate||""}" max="${s.latestDate||""}">
+        </div>
+      </div>
+      <div class="filter-field">
+        <label for="sortSelect">Sort</label>
+        <select class="sort-select" id="sortSelect">
+          <option value="date-desc">Newest first</option>
+          <option value="date-asc">Oldest first</option>
+          <option value="company-asc">Company A–Z</option>
+        </select>
+      </div>
+      <div class="filter-field">
+        <label for="searchInput">Search</label>
+        <div class="search-box" style="padding:6px 10px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="text" id="searchInput" placeholder="Headline, partner…" value="${state.search}">
+        </div>
+      </div>
+      <div class="filter-clear"><button id="clearFilters">Clear all filters</button></div>
+    </div>
+
+    <div class="controls">
+      <div style="font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-dim); align-self:center;">Event type</div>
     </div>
     <div class="chip-row" id="catChips">
       ${cats.map(([name]) => `<span class="chip" data-cat="${name}">${name}</span>`).join("")}
@@ -466,6 +553,21 @@ function renderDashboard() {
     <div class="cards" id="cardsWrap"></div>
     <div class="pager" id="pagerWrap"></div>
   `;
+
+  const companySelect = document.getElementById("companySelect");
+  const companyNames = Array.from(new Set(d.rows.map(r => r.company))).sort((a,b) => a.localeCompare(b));
+  companyNames.forEach(name => {
+    const opt = document.createElement("option");
+    opt.value = name; opt.textContent = name;
+    companySelect.appendChild(opt);
+  });
+  companySelect.value = state.company;
+  companySelect.addEventListener("change", e => { state.company = e.target.value; state.page = 1; renderRows(); });
+
+  document.getElementById("dateFromInput").value = state.dateFrom;
+  document.getElementById("dateToInput").value = state.dateTo;
+  document.getElementById("dateFromInput").addEventListener("change", e => { state.dateFrom = e.target.value; state.page = 1; renderRows(); });
+  document.getElementById("dateToInput").addEventListener("change", e => { state.dateTo = e.target.value; state.page = 1; renderRows(); });
 
   document.getElementById("searchInput").addEventListener("input", e => { state.search = e.target.value; state.page = 1; renderRows(); });
   document.getElementById("sortSelect").value = state.sort;
@@ -478,6 +580,10 @@ function renderDashboard() {
       renderRows();
     });
   });
+  document.getElementById("clearFilters").addEventListener("click", () => {
+    state.search = ""; state.cats.clear(); state.company = ""; state.dateFrom = ""; state.dateTo = ""; state.page = 1;
+    renderDashboard();
+  });
 
   renderRows();
 }
@@ -489,6 +595,9 @@ function renderRows() {
 
   let rows = d.rows.filter(r => {
     if (state.cats.size && !state.cats.has(r.category)) return false;
+    if (state.company && r.company !== state.company) return false;
+    if (state.dateFrom && (!r.dateSort || r.dateSort < state.dateFrom)) return false;
+    if (state.dateTo && (!r.dateSort || r.dateSort > state.dateTo)) return false;
     if (state.search) {
       const q = state.search.toLowerCase();
       const hay = [r.company, r.secondary, r.headline, r.partner, r.initiative, r.update].join(" ").toLowerCase();
@@ -503,8 +612,12 @@ function renderRows() {
     return state.sort === "date-asc" ? da.localeCompare(db) : db.localeCompare(da);
   });
 
+  const activeFilters = [];
+  if (state.cats.size) activeFilters.push(Array.from(state.cats).join(", "));
+  if (state.company) activeFilters.push(state.company);
+  if (state.dateFrom || state.dateTo) activeFilters.push(`${state.dateFrom || "earliest"} → ${state.dateTo || "latest"}`);
   document.getElementById("countLine").textContent =
-    `${rows.length} update${rows.length===1?"":"s"}${state.cats.size ? " · filtered by " + Array.from(state.cats).join(", ") : ""}`;
+    `${rows.length} update${rows.length===1?"":"s"}${activeFilters.length ? " · filtered by " + activeFilters.join(" · ") : ""}`;
 
   const total = rows.length;
   const pages = Math.max(1, Math.ceil(total / state.perPage));
