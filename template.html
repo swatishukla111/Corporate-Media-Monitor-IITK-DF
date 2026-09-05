@@ -1,5 +1,5 @@
 <title>Corporate Media Monitor</title>
-<meta name="description" content="Signal monitor tracking corporate CSR activity across three channels: CSR companies, R&D companies, and academic institutes.">
+<meta name="description" content="Update monitor tracking corporate CSR activity across three channels: CSR companies, R&D companies, and academic institutes.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' fill='%2314170F'/%3E%3Crect x='3' y='13' width='3' height='8' fill='%23D9A536'/%3E%3Crect x='8' y='6' width='3' height='15' fill='%23D9A536'/%3E%3Crect x='13' y='10' width='3' height='11' fill='%23D9A536'/%3E%3Crect x='18' y='3' width='3' height='18' fill='%23D9A536'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -357,7 +357,7 @@
   <div class="topbar">
     <div class="brand-mark">
       <span class="bars" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
-      <span class="word">Corporate Media Monitor<span class="sub">AI-assisted CSR signal tracking</span></span>
+      <span class="word">Corporate Media Monitor<span class="sub">AI-assisted CSR update tracking</span></span>
     </div>
     <div class="meta"><span class="live">3 CHANNELS TRACKED</span><br><span id="refreshedStamp"></span></div>
   </div>
@@ -365,7 +365,7 @@
   <!-- Landing -->
   <div class="view active" id="landing">
     <div class="intro">
-      <div class="eyebrow"><span class="dash">//</span> SIGNAL MONITOR</div>
+      <div class="eyebrow"><span class="dash">//</span> UPDATE MONITOR</div>
       <h1>Three channels. One monitor.</h1>
       <p>Each channel runs its own AI-assisted media search against a fixed subject list, logging CSR spends, initiatives, ESG disclosures, and NGO tie-ups as they surface. Tune into a channel to browse what it's picked up so far.</p>
     </div>
@@ -440,7 +440,7 @@ function buildDonut(cats, total) {
     <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--line-soft)" stroke-width="${sw}"></circle>
     <g transform="rotate(-90 ${cx} ${cy})">${rings}</g>
     <text x="${cx}" y="${cy-4}" text-anchor="middle" class="donut-center-label" fill="var(--ink)" font-size="22">${total}</text>
-    <text x="${cx}" y="${cy+14}" text-anchor="middle" fill="var(--ink-dim)" font-family="JetBrains Mono, monospace" font-size="8.5" letter-spacing="1">SIGNALS</text>
+    <text x="${cx}" y="${cy+14}" text-anchor="middle" fill="var(--ink-dim)" font-family="JetBrains Mono, monospace" font-size="8.5" letter-spacing="1">UPDATES</text>
   </svg>`;
 }
 
@@ -485,7 +485,7 @@ function renderTiles() {
         ${buildWaveform(s.totalUpdates, ready)}
         ${ready ? `
         <div class="stat-row">
-          <div class="stat"><b>${s.totalUpdates}</b><span>Signals</span></div>
+          <div class="stat"><b>${s.totalUpdates}</b><span>Updates</span></div>
           <div class="stat"><b>${s.nSubjects}</b><span>${s.instituteMode ? "Donors" : "Companies"}</span></div>
           <div class="stat"><b>${fmtDate(s.latestDate).split(" ").slice(0,2).join(" ")}</b><span>Latest</span></div>
         </div>` : `
@@ -526,7 +526,7 @@ function renderDashboard() {
     body.innerHTML = `
       <div class="empty-state">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/><path d="M12 12v-3M12 15h.01"/></svg>
-        <h3>No signal yet</h3>
+        <h3>No updates yet</h3>
         <p>This channel tracks <strong>${d.summary.sourceList}</strong>. Once a monitoring run finishes for this list, its findings appear here automatically.</p>
         <span class="tag">Awaiting first run</span>
       </div>`;
@@ -539,10 +539,10 @@ function renderDashboard() {
 
   body.innerHTML = `
     <div class="stat-strip">
-      <div class="stat-card"><div class="lbl">Total signals</div><div class="val mono">${s.totalUpdates}</div><div class="sub">${cats.length} categories</div></div>
+      <div class="stat-card"><div class="lbl">Total updates</div><div class="val mono">${s.totalUpdates}</div><div class="sub">${cats.length} categories</div></div>
       <div class="stat-card"><div class="lbl">${s.instituteMode ? "Donor companies" : "Companies covered"}</div><div class="val mono">${s.nSubjects}</div><div class="sub">of tracked list</div></div>
-      <div class="stat-card"><div class="lbl">Latest signal</div><div class="val" style="font-size:20px">${fmtDate(s.latestDate)}</div><div class="sub">earliest ${fmtDate(s.earliestDate)}</div></div>
-      <div class="stat-card"><div class="lbl">Leading category</div><div class="val" style="font-size:18px">${cats[0] ? cats[0][0] : "—"}</div><div class="sub">${cats[0] ? cats[0][1] + " signals" : ""}</div></div>
+      <div class="stat-card"><div class="lbl">Latest update</div><div class="val" style="font-size:20px">${fmtDate(s.latestDate)}</div><div class="sub">earliest ${fmtDate(s.earliestDate)}</div></div>
+      <div class="stat-card"><div class="lbl">Leading category</div><div class="val" style="font-size:18px">${cats[0] ? cats[0][0] : "—"}</div><div class="sub">${cats[0] ? cats[0][1] + " updates" : ""}</div></div>
     </div>
 
     <div class="panel">
@@ -682,7 +682,7 @@ function renderRows() {
   if (state.company) activeFilters.push(state.company);
   if (state.dateFrom || state.dateTo) activeFilters.push(`${state.dateFrom || "earliest"} → ${state.dateTo || "latest"}`);
   document.getElementById("countLine").textContent =
-    `${rows.length} signal${rows.length===1?"":"s"}${activeFilters.length ? " · filtered by " + activeFilters.join(" · ") : ""}`;
+    `${rows.length} update${rows.length===1?"":"s"}${activeFilters.length ? " · filtered by " + activeFilters.join(" · ") : ""}`;
 
   const total = rows.length;
   const pages = Math.max(1, Math.ceil(total / state.perPage));
@@ -692,7 +692,7 @@ function renderRows() {
 
   const wrap = document.getElementById("cardsWrap");
   if (!pageRows.length) {
-    wrap.innerHTML = `<div class="no-results">// no signals match this filter</div>`;
+    wrap.innerHTML = `<div class="no-results">// no updates match this filter</div>`;
   } else {
     wrap.innerHTML = pageRows.map(r => {
       const k = catKey(r.category);
